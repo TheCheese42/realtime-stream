@@ -1,0 +1,13 @@
+html * {
+  font-family: Verdana, Helvetica, Arial;
+  height: 100%;
+}
+body {
+  min-height: 98%;
+  position: relative;
+}
+footer { 
+  position: absolute;
+  bottom: 0;
+  width: 960px;
+}
