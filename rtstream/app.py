@@ -1,11 +1,12 @@
 import os
+import threading
 from pathlib import Path
 
 import dotenv
+from database import Database
+from delete_daemon import delete_daemon
 from flask import Flask, jsonify, render_template, request
 from mysql.connector import Error as ConnectorError
-
-from .database import Database
 
 app = Flask(__name__)
 
@@ -31,6 +32,7 @@ if password is None:
 if database is None:
     malformed_dotenv("MYSQL_DATABASE")
 
+
 DB = Database(
     host=host,
     user=user,
@@ -40,7 +42,12 @@ DB = Database(
 )
 
 
-INTERNAL_ERROR = jsonify({"error": "An internal error occurred."}), 500
+thread = threading.Thread(target=delete_daemon, daemon=True, args=(DB,))
+thread.start()
+
+
+with app.app_context():
+    INTERNAL_ERROR = jsonify({"error": "An internal error occurred."}), 500
 
 
 @app.route("/")
@@ -55,14 +62,19 @@ def create_output():
     except ConnectorError:
         return INTERNAL_ERROR
 
-    return jsonify(
-        {"message": "New output created successfully", "uuid": uuid}
-    ), 201
+    data = request.get_data().decode("utf-8")
+    if data:
+        try:
+            DB.append_to_output(uuid, data)
+        except ConnectorError:
+            return INTERNAL_ERROR
+
+    return uuid, 201
 
 
-@app.route("/a/<str:uuid>", methods=["PATCH"])
+@app.route("/a/<uuid>", methods=["PATCH"])
 def append_to_output(uuid):
-    data = request.get_json()
+    data = request.get_data().decode("utf-8")
 
     try:
         if not DB.has_output(uuid):
@@ -83,7 +95,7 @@ def append_to_output(uuid):
     return jsonify({"message": "Output appended successfully"}), 200
 
 
-@app.route("/d/<str:uuid>", methods=["DELETE"])
+@app.route("/d/<uuid>", methods=["DELETE"])
 def delete_output(uuid):
     try:
         if not DB.has_output(uuid):
@@ -97,3 +109,19 @@ def delete_output(uuid):
         return INTERNAL_ERROR
 
     return jsonify({"message": "Output deleted successfully"}), 200
+
+
+@app.route("/g/<uuid>")
+def get_output(uuid):
+    try:
+        if not DB.has_output(uuid):
+            return jsonify({"error": "Output doesn't exist"}), 404
+    except ConnectorError:
+        return INTERNAL_ERROR
+
+    try:
+        output = DB.get_output(uuid)
+    except ConnectorError:
+        return INTERNAL_ERROR
+
+    return output, 200

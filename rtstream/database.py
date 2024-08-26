@@ -50,6 +50,9 @@ class Database:
             params=(uuid,),
         )
 
+    def get_output(self, uuid: str) -> str:
+        return self._fetch_value("outputs", uuid, "output")
+
     def append_to_output(self, uuid: str, content: str) -> None:
         output = self._fetch_value("outputs", uuid, "output")
         new_output = output + content
@@ -66,6 +69,12 @@ class Database:
             "SELECT * FROM outputs WHERE uuid = %s",
             params=(uuid,),
         ))
+
+    def get_uuids(self) -> list[str]:
+        result = self._fetch_data("SELECT uuid FROM outputs")
+        if result:
+            return result[0]
+        return result
 
     def _execute_query(
         self,

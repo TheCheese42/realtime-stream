@@ -25,7 +25,51 @@
 
     <br><br><br>
 
-    This is a tool to redirect terminal streams to so everyone with the link will be able to access them. Below is a list of API endpoints with examples.
+    This is a tool to redirect terminal streams to so everyone with the link will be able to access them. Below is a list of API endpoints
+    with examples.
+    <br><br>
+    Output streams are kept for 24 hours by default. After that duration, they're deleted.
+    <br><br>
+    To view an output stream in the web view, visit the <b>/v/&lt;uuid&gt;</b> endpoint in a browser.
+
+    <br><br><br>
+
+    <h3>Create a new output stream</h3>
+    <b>Endpoint: /c</b><br>
+    HTTP Method: POST<br>
+    Successful response content: The UUID of the newly created output stream.<br>
+    <br>
+    Examples (cURL):<br>
+    curl -X POST doma.in/c<br>
+    curl -X POST -d "Initial Data" http://doma.in/c<br>
+
+    <br><br><br>
+
+    <h3>Append to an output stream</h3>
+    <b>Endpoint: /a/&lt;uuid&gt;</b><br>
+    HTTP Method: PATCH<br>
+    <br>
+    Example (cURL):<br>
+    curl -X PATCH -d "Some new output for the stream" http://doma.in/a/ABC123<br>
+
+    <br><br><br>
+
+    <h3>Delete an output stream</h3>
+    <b>Endpoint: /d/&lt;uuid&gt;</b><br>
+    HTTP Method: DELETE<br>
+    <br>
+    Example (cURL):<br>
+    curl -X DELETE http://doma.in/d/ABC123<br>
+
+    <br><br><br>
+
+    <h3>Fetch a stream's full output</h3>
+    <b>Endpoint: /g/&lt;uuid&gt;</b><br>
+    Successful response content: The full output as plain text.<br>
+    HTTP Method: GET<br>
+    <br>
+    Example (cURL):<br>
+    curl http://doma.in/g/ABC123<br>
 
 </body>
 </html>
