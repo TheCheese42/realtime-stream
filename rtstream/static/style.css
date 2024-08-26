@@ -1,6 +1,8 @@
 html * {
   font-family: Verdana, Helvetica, Arial;
   height: 100%;
+  color: rgb(200, 200, 200);
+  background-color: rgb(40, 40, 40);
 }
 body {
   min-height: 98%;

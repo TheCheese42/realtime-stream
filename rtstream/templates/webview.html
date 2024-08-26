@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="robots" content="noindex,nofollow" />
+  <meta name="description" content="Realtime Stream - Redirect terminal streams to a remote server so anyone with the link can view them in realtime.">
+  <meta property="og:title" content="Realtime Stream">
+  <meta property="og:description" content="Realtime Stream - Redirect terminal streams to a remote server so anyone with the link can view them in realtime.">
+  <link href="/static/style.css" rel="stylesheet" id="style-link">
+  <title>Realtime Stream: Webview</title>
+</head>
+
+<body id="body">
+  <style>
+    div.content {
+      width: 960px;
+      margin: auto;
+    }
+    div.code-pair {
+      display: flex;
+      width: 100%;
+      border-color: rgb(20, 20, 20);
+      color: rgb(160, 160, 160);
+      background-color: rgb(60, 60, 60);
+    }
+    div.code-line {
+      border-right-color: rgb(20, 20, 20);
+      width: 40px;
+      color: rgb(180, 180, 180);
+      background-color: rgb(70, 70, 70);
+      user-select: none;
+      margin-left: 10px;
+      padding-left: 10px;
+      padding-right: 10px;
+      -moz-user-select: none;
+      -webkit-user-select: none;
+    }
+    div.code-line-top {
+      border-top-left-radius: 10px;
+      border-top-right-radius: 10px;
+    }
+    div.code-line-bottom {
+      border-bottom-left-radius: 10px;
+      border-bottom-right-radius: 10px;
+    }
+    div.code-con {
+      margin-right: 10px;
+      padding-left: 10px;
+      padding-right: 10px;
+      background-color: rgb(60, 60, 60);
+    }
+    div.code-pair-top {
+      border-top-left-radius: 15px;
+      border-top-right-radius: 15px;
+      padding-top: 5px;
+    }
+    div.code-pair-bottom {
+      border-bottom-left-radius: 15px;
+      border-bottom-right-radius: 15px;
+      padding-bottom: 5px;
+    }
+  </style>
+  <div class="content">
+    <div class="wrapper">
+    <header>
+      <h1>Realtime Stream: Webview for {{ uuid }}</h1>
+    </header>
+
+    <br>
+
+    <div id="code">
+    </div>
+    </div>
+  </div>
+  <script>
+    function update(content) {
+        let code = document.getElementById("code");
+        code.innerHTML = "";
+        let cur_line = 1;
+        for (const line of content.split("\n")) {
+        let extra_class;
+        let extra_line_class;
+        if (content.split("\n").length === 1) {
+            extra_class = "code-pair-top code-pair-bottom";
+            extra_line_class = "code-line-top code-line-bottom";
+        } else if (cur_line === 1) {
+            extra_class = "code-pair-top";
+            extra_line_class = "code-line-top";
+        } else if (cur_line === content.split("\n").length) {
+            extra_class = "code-pair-bottom";
+            extra_line_class = "code-line-bottom";
+        } else {
+            extra_class = "";
+            extra_line_class = "";
+        }
+        code.innerHTML += `<div class="code-pair ${extra_class}"><div class="code-line ${extra_line_class}">${cur_line}</div><div class="code-con">${line}</div></div>`
+        cur_line += 1
+        }
+    }
+    update(`{{ output }}`)
+  </script>
+
+</body>
+</html>

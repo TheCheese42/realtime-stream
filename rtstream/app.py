@@ -125,3 +125,19 @@ def get_output(uuid):
         return INTERNAL_ERROR
 
     return output, 200
+
+
+@app.route("/v/<uuid>")
+def webview(uuid):
+    try:
+        if not DB.has_output(uuid):
+            return jsonify({"error": "Output doesn't exist"}), 404
+    except ConnectorError:
+        return INTERNAL_ERROR
+
+    try:
+        output = DB.get_output(uuid)
+    except ConnectorError:
+        return INTERNAL_ERROR
+
+    return render_template("webview.html", uuid=uuid, output=output)
