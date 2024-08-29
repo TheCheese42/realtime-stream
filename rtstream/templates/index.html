@@ -16,6 +16,14 @@
       width: 960px;
       margin: auto;
     }
+    span.code {
+      background-color: rgb(30, 30, 30);
+      border-radius: 3px;
+      font-family: monospace;
+      padding-left: 4px;
+      padding-right: 4px;
+      font-size: 14px;
+    }
   </style>
   <div class="content">
     <div class="wrapper">
@@ -30,46 +38,73 @@
     <br><br>
     Output streams are kept for 24 hours by default. After that duration, they're deleted.
     <br><br>
-    To view an output stream in the web view, visit the <b>/v/&lt;uuid&gt;</b> endpoint in a browser.
+    To view an output stream in the web view, visit the <span class="code">/v/&lt;uuid&gt;</span> endpoint in a browser or fill the field below.
+    <br><br>
+    <input id="uuid_input" placeholder="Enter UUID for webview" onchange="update_link()"><button id="open_vw_btn" onclick="open_wv()"><a href="/">Open web view</a></button>
+    <script>
+    function update_link() {
+      let uuid = document.getElementById("uuid_input").value;
+      let btn = document.getElementById("open_vw_btn");
+      btn.innerHTML = `<a href="/v/${uuid}">Open web view</a>`
+    }
+    </script>
 
     <br><br><br>
 
+    <h2>Use the bash script</h2>
+    You can find out bash script <a href="/script">here</a>. Install it using the following command:<br>
+    <span class="code">curl "http://{{ host }}/script" > ~/.local/bin/rts && chmod +x ~/.local/bin/rts</b></span>
+    <br><br><br>
+    <h3>Script examples</h3>
+    Auto-create new stream and append command output immediately:<br>
+    <span class="code">neofetch | rts</span><br>
+    Stream UUID will be printed to stdout.
+    <br><br>
+    Pass custom UUID to append command output to existing stream:<br>
+    <span class="code">neofetch | rts uuid12</span><br>
+    A new UUID can be acquired using <span class="code">curl -X POST http://{{host}}/c</span>.
+
+    <br><br><br><br>
+
+    <h2>Endpoints</h2>
+
     <h3>Create a new output stream</h3>
-    <b>Endpoint: /c</b><br>
-    HTTP Method: POST<br>
+    Endpoint: <span class="code">/c</span><br>
+    HTTP Method: <span class="code">POST</span><br>
     Successful response content: The UUID of the newly created output stream.<br>
     <br>
     Examples (cURL):<br>
-    curl -X POST doma.in/c<br>
-    curl -X POST -d "Initial Data" http://doma.in/c<br>
+    <span class="code">curl -X POST http://{{host}}/c<br></span>
+    <span class="code">curl -X POST -d "Initial Data" http://{{ host }}/c<br></span>
 
     <br><br><br>
 
     <h3>Append to an output stream</h3>
-    <b>Endpoint: /a/&lt;uuid&gt;</b><br>
-    HTTP Method: PATCH<br>
+    Endpoint: <span class="code">/a/&lt;uuid&gt;</span><br>
+    HTTP Method: <span class="code">PATCH</span><br>
     <br>
     Example (cURL):<br>
-    curl -X PATCH -d "Some new output for the stream" http://doma.in/a/ABC123<br>
+    <span class="code">curl -X PATCH -d "Some new output for the stream" http://{{ host }}/a/ABC123</span><br>
 
     <br><br><br>
 
     <h3>Delete an output stream</h3>
-    <b>Endpoint: /d/&lt;uuid&gt;</b><br>
-    HTTP Method: DELETE<br>
+    Endpoint: <span class="code">/d/&lt;uuid&gt;</span><br>
+    HTTP Method: <span class="code">DELETE</span><br>
     <br>
     Example (cURL):<br>
-    curl -X DELETE http://doma.in/d/ABC123<br>
+    <span class="code">curl -X DELETE http://{{ host }}/d/ABC123</span><br>
 
     <br><br><br>
 
     <h3>Fetch a stream's full output</h3>
-    <b>Endpoint: /g/&lt;uuid&gt;</b><br>
+    Endpoint: <span class="code">/g/&lt;uuid&gt;</span><br>
     Successful response content: The full output as plain text.<br>
-    HTTP Method: GET<br>
+    HTTP Method: <span class="code">GET</span><br>
     <br>
     Example (cURL):<br>
-    curl http://doma.in/g/ABC123<br>
+    <span class="code">curl http://{{ host }}/g/ABC123</span><br>
+    <br><br>
 
 </body>
 </html>

@@ -5,7 +5,7 @@ from pathlib import Path
 import dotenv
 from database import Database
 from delete_daemon import delete_daemon
-from flask import Flask, jsonify, render_template, request
+from flask import Flask, jsonify, make_response, render_template, request
 from mysql.connector import Error as ConnectorError
 
 app = Flask(__name__)
@@ -52,7 +52,7 @@ with app.app_context():
 
 @app.route("/")
 def index() -> str:
-    return render_template("index.html")
+    return render_template("index.html", host=request.host)
 
 
 @app.route("/c", methods=["POST"])
@@ -129,15 +129,16 @@ def get_output(uuid):
 
 @app.route("/v/<uuid>")
 def webview(uuid):
-    try:
-        if not DB.has_output(uuid):
-            return jsonify({"error": "Output doesn't exist"}), 404
-    except ConnectorError:
-        return INTERNAL_ERROR
+    return render_template("webview.html", uuid=uuid)
 
-    try:
-        output = DB.get_output(uuid)
-    except ConnectorError:
-        return INTERNAL_ERROR
 
-    return render_template("webview.html", uuid=uuid, output=output)
+@app.route("/script")
+def script():
+    response = make_response(
+        (Path(__file__).parent / "rts.sh").read_text("utf-8").replace(
+            "{host}", request.host, 1
+        ),
+        200
+    )
+    response.mimetype = "text/plain"
+    return response

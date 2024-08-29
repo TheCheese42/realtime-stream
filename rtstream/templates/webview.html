@@ -59,12 +59,25 @@
       border-bottom-right-radius: 15px;
       padding-bottom: 5px;
     }
+    div.error {
+      min-height: 40px;
+      border-radius: 5px;
+      background-color: red;
+      display: flex;
+      padding-left: 20px;
+      padding-right: 20px;
+      justify-content: space-between;
+      padding-top: 14px;
+      visibility: hidden;
+    }
   </style>
   <div class="content">
     <div class="wrapper">
     <header>
       <h1>Realtime Stream: Webview for {{ uuid }}</h1>
     </header>
+
+    <div id="error" class="error"></div>
 
     <br>
 
@@ -73,6 +86,26 @@
     </div>
   </div>
   <script>
+    const escapeHTML = str => str.replace(/[&<>'"]/g, 
+      tag => ({
+          '&': '&amp;',
+          '<': '&lt;',
+          '>': '&gt;',
+          "'": '&#39;',
+          '"': '&quot;'
+        }[tag]));
+
+    function show_error(err) {
+      let error = document.getElementById("error");
+      error.innerHTML = `<span style="background-color: red; color: white;">${err}</span><button onclick="hide_error()" style="background-color: white; color: black;">X</button>`;
+      error.style.visibility = "visible";
+    }
+    function hide_error() {
+      let error = document.getElementById("error");
+      error.innerHTML = "";
+      error.style.visibility = "hidden";
+    }
+
     function update(content) {
         let code = document.getElementById("code");
         code.innerHTML = "";
@@ -93,11 +126,33 @@
             extra_class = "";
             extra_line_class = "";
         }
-        code.innerHTML += `<div class="code-pair ${extra_class}"><div class="code-line ${extra_line_class}">${cur_line}</div><div class="code-con">${line}</div></div>`
-        cur_line += 1
+        code.innerHTML += `<div class="code-pair ${extra_class}"><div class="code-line ${extra_line_class}">${cur_line}</div><div class="code-con">${line}</div></div>`;
+        cur_line += 1;
         }
     }
-    update(`{{ output }}`)
+
+      async function fetch_output() {
+      try {
+        const response = await fetch("/g/{{ uuid }}");
+        if (!response.ok) {
+          if (response.status == 404) {
+            show_error("Invalid UUID")
+          } else {
+            show_error("Server Error - Please retry or try again later");
+          }
+          return
+        }
+
+        const output = escapeHTML(await response.text());
+        update(output);
+      } catch (error) {
+        console.error(error)
+        show_error("An error occurred, please retry");
+      }
+    }
+
+    fetch_output()
+    setInterval(fetch_output, 1000)
   </script>
 
 </body>
