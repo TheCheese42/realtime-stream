@@ -1,8 +1,12 @@
 import os
 import time
 
-from database import Database
 from mysql.connector.errors import Error as ConnectorError
+
+try:
+    from database import Database
+except ModuleNotFoundError:
+    from .database import Database
 
 
 def delete_daemon(db: Database):

@@ -3,10 +3,15 @@ import threading
 from pathlib import Path
 
 import dotenv
-from database import Database
-from delete_daemon import delete_daemon
 from flask import Flask, jsonify, make_response, render_template, request
 from mysql.connector import Error as ConnectorError
+
+try:
+    from database import Database
+    from delete_daemon import delete_daemon
+except ModuleNotFoundError:
+    from .database import Database
+    from .delete_daemon import delete_daemon
 
 app = Flask(__name__)
 
