@@ -31,6 +31,9 @@ MYSQL_DATABASE = "<MYSQL_DATABASE_NAME_HERE>"
 # The following are required when using SQLite. Do NOT add them otherwise!
 RTS_USE_SQLITE = "1"
 RTS_SQLITE_PATH = "rtstream.db"
+
+# Optional keys:
+# RTS_NO_SETUP_SQLITE = "1"  # If a newly created SQLite DB should not be set up automatically. Usually better to leave this away.
 ```
 
 ## Usage

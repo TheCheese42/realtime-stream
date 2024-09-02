@@ -41,7 +41,18 @@ if database is None and not use_sqlite:
 
 
 if use_sqlite:
+    need_setup_sqlite = True if not Path(
+        sqlite_path
+    ).absolute().exists() else False
     DB = Database.init_sqlite(Path(sqlite_path).absolute())
+    if need_setup_sqlite and not os.getenv("RTS_NO_SETUP_SQLITE"):
+        try:
+            from .. import setup_db
+        except ImportError:
+            import sys
+            sys.path.insert(0, str(Path(__file__).parent.parent))
+            import setup_db
+        setup_db.setup_sqlite(sqlite_path)
 else:
     DB = Database(
         host=host,

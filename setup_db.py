@@ -4,7 +4,7 @@ import sqlite3
 from pathlib import Path
 
 import dotenv
-from mysql.connector import Error, connect
+from mysql.connector import connect
 
 CREATE_QUERY = """CREATE TABLE `outputs` (
                     `uuid` char(6) NOT NULL PRIMARY KEY,
