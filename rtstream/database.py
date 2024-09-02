@@ -158,7 +158,7 @@ class Database:
         if self.using_sqlite:
             return
         if not self.connection.is_connected():
-            self.connection.reconnect(10)
+            self.connection.reconnect(attempts=50, delay=0.2)
 
     def close(self) -> None:
         self.cursor.close()
