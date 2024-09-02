@@ -1,6 +1,9 @@
 import random
+import sqlite3
 import time
-from typing import Any
+from pathlib import Path
+from threading import Lock
+from typing import Any, Optional
 
 from mysql.connector import connect
 from mysql.connector.types import ParamsSequenceOrDictType, RowType
@@ -21,7 +24,8 @@ class Database:
         password: str,
         database: str,
         port: str = "3306",
-    ):
+    ) -> None:
+        self.using_sqlite = False
         self.connection = connect(
             host=host,
             port=int(port),
@@ -30,6 +34,18 @@ class Database:
             database=database,
         )
         self.cursor = self.connection.cursor()
+        self.p = "%s"
+        self.lock: Optional[Lock] = None
+
+    @classmethod
+    def init_sqlite(cls, path: Path) -> "Database":
+        obj = cls.__new__(cls)
+        obj.using_sqlite = True
+        obj.connection = sqlite3.connect(path, check_same_thread=False)
+        obj.cursor = obj.connection.cursor()
+        obj.p = "?"
+        obj.lock = Lock()
+        return obj
 
     def create_output(self) -> str:
         """
@@ -46,7 +62,7 @@ class Database:
 
     def delete_output(self, uuid: str) -> None:
         self._execute_query(
-            query="DELETE FROM outputs WHERE uuid = %s;",
+            query=f"DELETE FROM outputs WHERE uuid = {self.p}",
             params=(uuid,),
         )
 
@@ -66,7 +82,7 @@ class Database:
 
     def has_output(self, uuid: str) -> bool:
         return bool(self._fetch_data(
-            "SELECT * FROM outputs WHERE uuid = %s",
+            f"SELECT * FROM outputs WHERE uuid = {self.p}",
             params=(uuid,),
         ))
 
@@ -79,20 +95,22 @@ class Database:
     def _execute_query(
         self,
         query: str,
-        params: ParamsSequenceOrDictType = None
+        params: ParamsSequenceOrDictType = (),
     ) -> None:
-        self._ensure_connected()
-        self.cursor.execute(query, params)
-        self.connection.commit()
+        with self.lock:
+            self._ensure_connected()
+            self.cursor.execute(query, params)
+            self.connection.commit()
 
     def _fetch_data(
         self,
         query: str,
-        params: ParamsSequenceOrDictType = None
+        params: ParamsSequenceOrDictType = (),
     ) -> list[RowType]:
-        self._ensure_connected()
-        self.cursor.execute(query, params)
-        return self.cursor.fetchall()
+        with self.lock:
+            self._ensure_connected()
+            self.cursor.execute(query, params)
+            return self.cursor.fetchall()
 
     def _fetch_value(
         self,
@@ -101,7 +119,7 @@ class Database:
         field: str,
     ):
         result = self._fetch_data(
-            f"SELECT {field} FROM {table} WHERE uuid = %s",
+            f"SELECT {field} FROM {table} WHERE uuid = {self.p}",
             params=(uuid,)
         )
         try:
@@ -118,11 +136,11 @@ class Database:
         value: Any,
     ):
         if self._fetch_data(
-            f"SELECT * FROM {table} WHERE uuid = %s",
+            f"SELECT * FROM {table} WHERE uuid = {self.p}",
             params=(uuid,),
         ):
             self._execute_query(
-                f"UPDATE {table} SET {field} = %s WHERE uuid = %s",
+                f"UPDATE {table} SET {field} = {self.p} WHERE uuid = {self.p}",
                 params=(value, uuid),
             )
         else:
@@ -132,11 +150,13 @@ class Database:
 
     def _create(self, table: str, fields: tuple[str], values: tuple[Any]):
         self._execute_query(
-            f"INSERT INTO {table} ({', '.join(fields)}) VALUES ({', '.join(['%s'] * len(values))})",  # noqa
+            f"INSERT INTO {table} ({', '.join(fields)}) VALUES ({', '.join([self.p] * len(values))})",  # noqa
             params=values,
         )
 
     def _ensure_connected(self):
+        if self.using_sqlite:
+            return
         if not self.connection.is_connected():
             self.connection.reconnect(10)
 

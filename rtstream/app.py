@@ -17,6 +17,8 @@ app = Flask(__name__)
 
 
 dotenv.load_dotenv(Path(__file__).parent.parent / ".env")
+use_sqlite = os.getenv("RTS_USE_SQLITE") == "1"
+sqlite_path = os.getenv("RTS_SQLITE_PATH")
 host = os.getenv("MYSQL_HOST")
 user = os.getenv("MYSQL_USERNAME")
 password = os.getenv("MYSQL_PASSWORD")
@@ -28,23 +30,26 @@ def malformed_dotenv(missing_key: str):
     raise RuntimeError(f"Malformed .env: Missing key '{missing_key}'")
 
 
-if host is None:
+if host is None and not use_sqlite:
     malformed_dotenv("MYSQL_HOST")
-if user is None:
+if user is None and not use_sqlite:
     malformed_dotenv("MYSQL_USERNAME")
-if password is None:
+if password is None and not use_sqlite:
     malformed_dotenv("MYSQL_PASSWORD")
-if database is None:
+if database is None and not use_sqlite:
     malformed_dotenv("MYSQL_DATABASE")
 
 
-DB = Database(
-    host=host,
-    user=user,
-    password=password,
-    database=database,
-    port=port or "3306",
-)
+if use_sqlite:
+    DB = Database.init_sqlite(Path(sqlite_path).absolute())
+else:
+    DB = Database(
+        host=host,
+        user=user,
+        password=password,
+        database=database,
+        port=port or "3306",
+    )
 
 
 thread = threading.Thread(target=delete_daemon, daemon=True, args=(DB,))

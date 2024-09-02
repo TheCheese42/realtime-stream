@@ -1,9 +1,16 @@
 """Run this to initially set up a new database."""
 import os
+import sqlite3
+from pathlib import Path
 
 import dotenv
 from mysql.connector import Error, connect
-from pathlib import Path
+
+CREATE_QUERY = """CREATE TABLE `outputs` (
+                    `uuid` char(6) NOT NULL PRIMARY KEY,
+                    `output` text DEFAULT "" NOT NULL,
+                    `timestamp` varchar(20) NOT NULL
+                )"""
 
 
 def setup_mysql(
@@ -12,7 +19,7 @@ def setup_mysql(
     username: str,
     password: str,
     database: str,
-):
+) -> None:
     """
     Setup an mysql database. ONLY USE THIS WHEN A DATABASE ISN'T SET UP YET.
 
@@ -27,28 +34,35 @@ def setup_mysql(
     :param database: Database name in the target server.
     :type database: str
     """
-    try:
-        with connect(
-            host=host,
-            port=port,
-            user=username,
-            password=password,
-            database=database,
-        ) as connection:
-            with connection.cursor() as cursor:
-                cursor.execute(
-                    """CREATE TABLE `outputs` (
-                        `uuid` char(6) NOT NULL PRIMARY KEY,
-                        `output` text DEFAULT "" NOT NULL,
-                        `timestamp` varchar(20) NOT NULL
-                    )"""
-                )
-    except Error:
-        raise
+    with connect(
+        host=host,
+        port=port,
+        user=username,
+        password=password,
+        database=database,
+    ) as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(CREATE_QUERY)
+            connection.commit()
+
+
+def setup_sqlite(path: Path) -> None:
+    """
+    Setup an sqlite database. ONLY USE THIS WHEN A DATABASE ISN'T SET UP YET.
+    """
+    with sqlite3.connect(path) as connection:
+        cursor = connection.cursor()
+        try:
+            cursor.execute(CREATE_QUERY)
+            connection.commit()
+        finally:
+            cursor.close()
 
 
 if __name__ == "__main__":
     dotenv.load_dotenv(Path(__file__).parent / ".env")
+    use_sqlite = os.getenv("RTS_USE_SQLITE") == "1"
+    sqlite_path = os.getenv("RTS_SQLITE_PATH")
     host = os.getenv("MYSQL_HOST")
     user = os.getenv("MYSQL_USERNAME")
     password = os.getenv("MYSQL_PASSWORD")
@@ -58,19 +72,22 @@ if __name__ == "__main__":
     def malformed_dotenv(missing_key: str):
         raise RuntimeError(f"Malformed .env: Missing key '{missing_key}'")
 
-    if host is None:
+    if host is None and not use_sqlite:
         malformed_dotenv("MYSQL_HOST")
-    if user is None:
+    if user is None and not use_sqlite:
         malformed_dotenv("MYSQL_USERNAME")
-    if password is None:
+    if password is None and not use_sqlite:
         malformed_dotenv("MYSQL_PASSWORD")
-    if database is None:
+    if database is None and not use_sqlite:
         malformed_dotenv("MYSQL_DATABASE")
 
-    setup_mysql(
-        host=host,
-        port=port or "3306",
-        username=user,
-        password=password,
-        database=database,
-    )
+    if use_sqlite:
+        setup_sqlite(sqlite_path)
+    else:
+        setup_mysql(
+            host=host,
+            port=port or "3306",
+            username=user,
+            password=password,
+            database=database,
+        )

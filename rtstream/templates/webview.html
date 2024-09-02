@@ -78,7 +78,7 @@
   <div class="content">
     <div class="wrapper">
     <header>
-      <h1>Realtime Stream: Webview for {{ uuid }}</h1>
+      <div style="display: flex; justify-content: space-between"><h1>Realtime Stream: Webview for {{ uuid }}</h1><h1><a href="/">Home</a></h1></div>
     </header>
 
     <div id="error" class="error"></div>
@@ -90,6 +90,7 @@
     </div>
   </div>
   <script>
+    let prev_line_count = 0;
     const escapeHTML = str => str.replace(/[&<>'"]/g, 
       tag => ({
           '&': '&amp;',
@@ -133,6 +134,10 @@
         code.innerHTML += `<div class="code-pair ${extra_class}"><div class="code-line ${extra_line_class}">${cur_line}</div><div class="code-con">${line}</div></div>`;
         cur_line += 1;
         }
+        if (content.split("\n").length != prev_line_count) {
+          window.scrollTo(0, document.body.scrollHeight);
+        }
+        prev_line_count = content.split("\n").length;
     }
 
       async function fetch_output() {
@@ -156,7 +161,7 @@
     }
 
     fetch_output()
-    setInterval(fetch_output, 1000)
+    setInterval(fetch_output, 200)
   </script>
 
 </body>
